@@ -8,13 +8,22 @@ Classify Palmer penguins as **Adelie**, **Chinstrap** or **Gentoo** from their b
 
 ## Results
 
-| Metric | Score |
-|---|---|
-| 5-fold CV accuracy (train) | **99.6%** |
-| Held-out test accuracy (69 penguins) | **98.6%** |
-| Best model | Logistic regression, L2 penalty, `C=10` |
+Four models were tuned with grid search and compared using 5-fold cross-validation (CV). Recall is macro-averaged, so each species counts equally.
 
-The one test-set error was an Adelie predicted as a Chinstrap, the two species that overlap most in the data.
+| Model | CV accuracy | CV recall | Test accuracy | Test recall | Best settings |
+|---|---|---|---|---|---|
+| **Logistic regression** ✅ | **99.6%** | **99.7%** | 98.6% | 98.9% | `C=10`, L2 penalty |
+| K-nearest neighbours | 99.3% | 99.4% | 98.6% | 98.9% | `k=1` |
+| Random forest | 98.5% | 98.2% | 100% | 100% | 100 trees, no depth limit |
+| Decision tree | 95.6% | 95.2% | 98.6% | 98.9% | `max_depth=4` |
+
+**Logistic regression is selected** because it has the best CV accuracy. The random forest's perfect test score comes from a lucky split of only 69 penguins. Choosing a model by its test score would be cherry-picking, so the test set is used for reporting only. The top three models are within about one penguin per fold of each other, which makes the simplest and most interpretable model the sensible pick.
+
+<p align="center">
+  <img src="reports/figures/model_comparison.png" width="620" alt="Model comparison">
+</p>
+
+The chosen model's one test-set error was an Adelie predicted as a Chinstrap, the two species that overlap most in the data.
 
 <p align="center">
   <img src="reports/figures/confusion_matrix.png" width="340" alt="Confusion matrix">
@@ -27,9 +36,9 @@ The one test-set error was an Adelie predicted as a Chinstrap, the two species t
 
 1. **Explore** the dataset: class balance, missing values and how each measurement separates the species ([pairplot](reports/figures/pairplot.png)).
 2. **Split** 80/20, stratified by species, with the test set held back until the end.
-3. **Pipeline:** a `ColumnTransformer` imputes and scales numeric features and imputes and one-hot encodes `island`/`sex`, feeding a `LogisticRegression`. Because preprocessing is fitted inside the pipeline, cross-validation has no data leakage.
-4. **Tune** regularisation strength `C` and type (L1 vs L2) with `GridSearchCV`.
-5. **Evaluate** the best estimator once on the test set, interpret the coefficients and save the whole pipeline as one `joblib` file.
+3. **Pipeline:** a `ColumnTransformer` imputes and scales numeric features and imputes and one-hot encodes `island`/`sex`, feeding a classifier. Because preprocessing is fitted inside the pipeline, cross-validation has no data leakage.
+4. **Compare** logistic regression, k-nearest neighbours, a decision tree and a random forest. Each is tuned with `GridSearchCV` and scored on accuracy and macro recall.
+5. **Select** the model with the best CV accuracy, evaluate it on the test set, interpret its coefficients and save the whole pipeline as one `joblib` file.
 
 The saved model handles **missing values** and **unseen categories**; both are covered by tests.
 
@@ -83,13 +92,13 @@ uv run jupyter lab notebooks/which_penguin.ipynb
 ```
 which-penguin/
 ├── notebooks/
-│   └── which_penguin.ipynb   # EDA → pipeline → tuning → evaluation → interpretation
+│   └── which_penguin.ipynb   # EDA → pipeline → model comparison → evaluation → interpretation
 ├── src/which_penguin/
-│   ├── pipeline.py           # data loading, split, pipeline definition, grid search
-│   ├── train.py              # `uv run train`: tune, evaluate, save best model
+│   ├── pipeline.py           # data loading, split, pipeline, models + grids, comparison
+│   ├── train.py              # `uv run train`: compare models, save the best one
 │   └── predict.py            # `uv run predict`: CLI inference
 ├── tests/
-│   └── test_pipeline.py      # stratification, accuracy, missing values, unseen categories
+│   └── test_pipeline.py      # every model: accuracy, missing values, unseen categories
 ├── models/                   # trained model (git-ignored; created by `uv run train`)
 ├── reports/figures/          # charts used in this README
 ├── pyproject.toml
@@ -98,7 +107,7 @@ which-penguin/
 
 ## Next steps
 
-- Compare against tree-based models and report confidence intervals for the CV scores.
+- Use repeated cross-validation to put confidence intervals on the scores, since the top models are within noise of each other.
 - Serve the model behind a FastAPI endpoint with input validation.
 - Add CI (GitHub Actions) to run the tests on every push.
 

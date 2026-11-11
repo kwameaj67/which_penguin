@@ -1,4 +1,4 @@
-"""Train, evaluate and save the penguin classifier.
+"""Compare models, then save the one with the best cross-validated accuracy.
 
 Usage:
     uv run train [--output models/penguin_classifier.joblib]
@@ -10,9 +10,8 @@ import argparse
 from pathlib import Path
 
 import joblib
-from sklearn.metrics import accuracy_score, classification_report
 
-from which_penguin.pipeline import load_data, split_data, tune
+from which_penguin.pipeline import compare_models, load_data, split_data
 
 DEFAULT_MODEL_PATH = Path("models/penguin_classifier.joblib")
 
@@ -23,21 +22,17 @@ def main() -> None:
     args = parser.parse_args()
 
     data = load_data()
-    
     X_train, X_test, y_train, y_test = split_data(data)
-    search = tune(X_train, y_train)
-    model = search.best_estimator_
 
-    y_pred = model.predict(X_test)
-    
-    print(f"Best params:      {search.best_params_}")
-    print(f"CV accuracy:      {search.best_score_:.4f}")
-    print(f"Test accuracy:    {accuracy_score(y_test, y_pred):.4f}\n")
-    print(classification_report(y_test, y_pred))
+    results, searches = compare_models(X_train, y_train, X_test, y_test)
+    print(results.round(4).to_string())
+
+    best_name = results.index[0]  # highest CV accuracy
+    model = searches[best_name].best_estimator_
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, args.output)
-    print(f"Saved model to {args.output}")
+    print(f"\nSaved {best_name} to {args.output}")
 
 
 if __name__ == "__main__":
