@@ -1,7 +1,9 @@
 [project]
 name = "which-penguin"
 version = "0.1.0"
-description = "Predicting Palmer penguin species from body measurements with a production-style scikit-learn pipeline"
+description = "Classify Palmer penguin species from physical measurements with a production-style scikit-learn pipeline."
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.14"
 dependencies = [
     "joblib>=1.6.0",
@@ -12,7 +14,20 @@ dependencies = [
     "seaborn>=0.13.2",
 ]
 
+[project.scripts]
+train = "which_penguin.train:main"
+predict = "which_penguin.predict:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [dependency-groups]
 dev = [
     "ipykernel>=7.4.0",
+    "nbconvert>=7.17.2",
+    "pytest>=9.2.0",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
