@@ -54,13 +54,13 @@ cd which-penguin
 uv sync
 ```
 
-Train and save the model to `models/penguin_classifier.joblib`:
+To train and save the model to `models/penguin_classifier.joblib`:
 
 ```bash
 uv run train
 ```
 
-Predict a single penguin (any measurement can be left out and will be imputed):
+To predict a single penguin (any measurement can be left out and will be imputed):
 
 ```bash
 uv run predict --island Biscoe --sex Male --bill-length 48.6 --bill-depth 16.0 --flipper-length 230 --body-mass 5800
@@ -72,6 +72,14 @@ Predicted species: Gentoo
   Chinstrap    0.0%
   Adelie       0.0%
 ```
+
+Optional (TRY IT OUT)
+
+```bash
+uv run predict --bill-length 39
+```
+this works: everything else is filled in by the imputer. Even though the answer is less trustworthy, the probabilities show how confident the model is. 
+
 
 Run the tests:
 
